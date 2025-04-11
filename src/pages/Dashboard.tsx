@@ -1,6 +1,5 @@
-
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Search, Settings, LogOut, BarChart, Command, ChevronDown, Moon, Sun, Globe, 
@@ -23,8 +22,24 @@ const Dashboard = () => {
   const { theme, toggleTheme, language, toggleLanguage, t } = useTheme();
   const [searchId, setSearchId] = useState("");
   const [showStatistics, setShowStatistics] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
   
-  const { data: searchedCustomer, refetch: searchCustomer } = useQuery({
+  const queryParams = new URLSearchParams(location.search);
+  const customerIdFromUrl = queryParams.get("customerId");
+  
+  useEffect(() => {
+    if (customerIdFromUrl) {
+      setSearchId(customerIdFromUrl);
+      refetchCustomer();
+      setShowStatistics(false);
+    }
+  }, [customerIdFromUrl]);
+  
+  const { 
+    data: searchedCustomer, 
+    refetch: refetchCustomer 
+  } = useQuery({
     queryKey: ["customer", searchId],
     queryFn: () => searchCustomerById(searchId),
     enabled: false,
@@ -33,7 +48,8 @@ const Dashboard = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchId.trim().length > 0) {
-      searchCustomer();
+      navigate(`/dashboard?customerId=${searchId}`);
+      refetchCustomer();
       setShowStatistics(false);
     }
   };
@@ -41,6 +57,7 @@ const Dashboard = () => {
   const handleShowStatistics = () => {
     setShowStatistics(true);
     setSearchId("");
+    navigate("/dashboard");
   };
 
   return (
