@@ -49,6 +49,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
         </div>
       ),
       color: "bg-blue-100 dark:bg-blue-900/20",
+      hoverColor: "hover:bg-blue-200 dark:hover:bg-blue-800/30"
     },
     {
       title: language === "fa" ? "نوع مشتری" : "Customer Type",
@@ -59,6 +60,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
         </div>
       ),
       color: "bg-purple-100 dark:bg-purple-900/20",
+      hoverColor: "hover:bg-purple-200 dark:hover:bg-purple-800/30"
     },
     {
       title: language === "fa" ? "تاریخ ثبت" : "Registration Date",
@@ -69,6 +71,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
         </div>
       ),
       color: "bg-green-100 dark:bg-green-900/20",
+      hoverColor: "hover:bg-green-200 dark:hover:bg-green-800/30"
     },
     {
       title: language === "fa" ? "آخرین فعالیت" : "Last Activity",
@@ -79,6 +82,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
         </div>
       ),
       color: "bg-yellow-100 dark:bg-yellow-900/20",
+      hoverColor: "hover:bg-yellow-200 dark:hover:bg-yellow-800/30"
     },
     {
       title: language === "fa" ? "تراکنش ها" : "Transactions",
@@ -89,6 +93,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
         </div>
       ),
       color: "bg-red-100 dark:bg-red-900/20",
+      hoverColor: "hover:bg-red-200 dark:hover:bg-red-800/30"
     },
     {
       title: language === "fa" ? "امتیاز اعتباری" : "Credit Score",
@@ -105,6 +110,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
         </div>
       ),
       color: "bg-indigo-100 dark:bg-indigo-900/20",
+      hoverColor: "hover:bg-indigo-200 dark:hover:bg-indigo-800/30"
     },
     {
       title: language === "fa" ? "اطلاعات تماس" : "Contact Info",
@@ -120,6 +126,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
         </div>
       ),
       color: "bg-pink-100 dark:bg-pink-900/20",
+      hoverColor: "hover:bg-pink-200 dark:hover:bg-pink-800/30"
     },
     {
       title: language === "fa" ? "آدرس" : "Address",
@@ -130,6 +137,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
         </div>
       ),
       color: "bg-orange-100 dark:bg-orange-900/20",
+      hoverColor: "hover:bg-orange-200 dark:hover:bg-orange-800/30"
     },
     {
       title: language === "fa" ? "فایل پرونده" : "Customer File",
@@ -150,6 +158,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
         </div>
       ),
       color: "bg-cyan-100 dark:bg-cyan-900/20",
+      hoverColor: "hover:bg-cyan-200 dark:hover:bg-cyan-800/30"
     },
   ];
 
@@ -158,7 +167,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
       {panels.map((panel, index) => (
         <Card 
           key={index} 
-          className={`glass-morphism transition-all hover:shadow-lg ${panel.color}`}
+          className={`glass-morphism transition-all ${panel.color} ${panel.hoverColor} shadow-md hover:shadow-lg transform hover:-translate-y-1 duration-300`}
         >
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center text-lg">
