@@ -139,44 +139,48 @@ const Dashboard = () => {
           {showStatistics ? (
             <CustomerStatistics />
           ) : searchedCustomer ? (
-            <CustomerInfoPanels customer={searchedCustomer} />
+            <div className="max-w-6xl mx-auto">
+              <CustomerInfoPanels customer={searchedCustomer} />
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="bg-pistachio-500/10 glass-morphism animate-fade-in">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center text-lg">
-                    <Users className="mr-2 h-5 w-5" />
-                    {language === "fa" ? "مشتریان فعال" : "Active Customers"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">156</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-pistachio-500/10 glass-morphism animate-fade-in">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center text-lg">
-                    <Layers className="mr-2 h-5 w-5" />
-                    {language === "fa" ? "کل پرونده‌ها" : "Total Files"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">843</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-pistachio-500/10 glass-morphism animate-fade-in">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center text-lg">
-                    <AlertCircle className="mr-2 h-5 w-5" />
-                    {language === "fa" ? "نیاز به بررسی" : "Needs Review"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">24</p>
-                </CardContent>
-              </Card>
+            <div className="max-w-6xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="bg-green-100 dark:bg-green-900/20 glass-morphism animate-fade-in">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center text-lg">
+                      <Users className="mr-2 h-5 w-5" />
+                      {language === "fa" ? "مشتریان فعال" : "Active Customers"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold">156</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-blue-100 dark:bg-blue-900/20 glass-morphism animate-fade-in">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center text-lg">
+                      <Layers className="mr-2 h-5 w-5" />
+                      {language === "fa" ? "کل پرونده‌ها" : "Total Files"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold">843</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-orange-100 dark:bg-orange-900/20 glass-morphism animate-fade-in">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center text-lg">
+                      <AlertCircle className="mr-2 h-5 w-5" />
+                      {language === "fa" ? "نیاز به بررسی" : "Needs Review"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold">24</p>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           )}
         </div>

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
           </p>
         </div>
       ),
-      color: "bg-blue-500/10",
+      color: "bg-blue-100 dark:bg-blue-900/20",
     },
     {
       title: language === "fa" ? "نوع مشتری" : "Customer Type",
@@ -57,7 +58,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
           <p className="text-xl font-bold">{customer.customerType}</p>
         </div>
       ),
-      color: "bg-purple-500/10",
+      color: "bg-purple-100 dark:bg-purple-900/20",
     },
     {
       title: language === "fa" ? "تاریخ ثبت" : "Registration Date",
@@ -67,7 +68,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
           <p className="text-xl font-bold">{customer.registrationDate}</p>
         </div>
       ),
-      color: "bg-green-500/10",
+      color: "bg-green-100 dark:bg-green-900/20",
     },
     {
       title: language === "fa" ? "آخرین فعالیت" : "Last Activity",
@@ -77,7 +78,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
           <p className="text-xl font-bold">{customer.lastActivity}</p>
         </div>
       ),
-      color: "bg-yellow-500/10",
+      color: "bg-yellow-100 dark:bg-yellow-900/20",
     },
     {
       title: language === "fa" ? "تراکنش ها" : "Transactions",
@@ -87,14 +88,14 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
           <p className="text-xl font-bold">{customer.totalTransactions}</p>
         </div>
       ),
-      color: "bg-red-500/10",
+      color: "bg-red-100 dark:bg-red-900/20",
     },
     {
       title: language === "fa" ? "امتیاز اعتباری" : "Credit Score",
       icon: Activity,
       content: (
         <div className="space-y-2">
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
             <div 
               className="bg-pistachio-500 h-2.5 rounded-full" 
               style={{ width: `${(customer.creditScore / 1000) * 100}%` }}
@@ -103,7 +104,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
           <p className="text-xl font-bold">{customer.creditScore}</p>
         </div>
       ),
-      color: "bg-indigo-500/10",
+      color: "bg-indigo-100 dark:bg-indigo-900/20",
     },
     {
       title: language === "fa" ? "اطلاعات تماس" : "Contact Info",
@@ -118,7 +119,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
           </p>
         </div>
       ),
-      color: "bg-pink-500/10",
+      color: "bg-pink-100 dark:bg-pink-900/20",
     },
     {
       title: language === "fa" ? "آدرس" : "Address",
@@ -128,7 +129,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
           <p className="text-sm">{customer.contactInfo.address}</p>
         </div>
       ),
-      color: "bg-orange-500/10",
+      color: "bg-orange-100 dark:bg-orange-900/20",
     },
     {
       title: language === "fa" ? "فایل پرونده" : "Customer File",
@@ -148,16 +149,16 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
           </Button>
         </div>
       ),
-      color: "bg-cyan-500/10",
+      color: "bg-cyan-100 dark:bg-cyan-900/20",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
       {panels.map((panel, index) => (
         <Card 
           key={index} 
-          className={`glass-morphism animate-fade-in ${panel.color}`}
+          className={`glass-morphism transition-all hover:shadow-lg ${panel.color}`}
         >
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center text-lg">
