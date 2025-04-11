@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { downloadCustomerZip } from "@/lib/api";
 import type { Customer } from "@/lib/api";
 import { 
   User, Calendar, Clock, CreditCard, Phone, Mail, 
-  MapPin, FileZip, Activity, Shield
+  MapPin, FileIcon, Activity, Shield
 } from "lucide-react";
 
 interface CustomerInfoPanelsProps {
@@ -133,7 +132,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
     },
     {
       title: language === "fa" ? "فایل پرونده" : "Customer File",
-      icon: FileZip,
+      icon: FileIcon,
       content: (
         <div className="space-y-2">
           <p className="text-sm mb-2">{customer.zipFileName}</p>
