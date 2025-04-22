@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { 
-  Search, Settings, LogOut, Command, Globe, Moon, Sun, Users, AlertCircle, Layers
+  Search, Settings, LogOut, Command, Globe, Moon, Sun 
 } from "lucide-react";
 import { useTheme } from "@/context/theme-context";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import CustomerInfoPanels from "@/components/CustomerInfoPanels";
 import RecentCustomersList from "@/components/RecentCustomersList";
 import CustomerStatistics from "@/components/CustomerStatistics";
@@ -91,33 +91,44 @@ const Dashboard = () => {
         
         <div className="flex-1 overflow-auto p-4">
           <nav className="space-y-4">
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="commands" className="border-b-0">
-                <AccordionTrigger 
-                  className="py-2 px-3 rounded-md hover:bg-sidebar-accent transition-colors"
-                  onClick={handleShowCommands}
-                >
-                  <div className="flex items-center">
-                    <Command className="mr-2 h-5 w-5" />
-                    <span>{t('commands')}</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="py-2 pl-7 space-y-2">
-                    {Array.from({ length: 20 }).map((_, i) => (
-                      <Button
-                        key={i}
-                        variant="ghost"
-                        className="w-full justify-start text-sm"
-                      >
-                        {language === "fa" ? `دستور ${i + 1}` : `Command ${i + 1}`}
-                      </Button>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start" 
+              onClick={handleShowDashboard}
+            >
+              <Command className="mr-2 h-5 w-5" />
+              <span>{t('dashboard')}</span>
+            </Button>
 
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start" 
+              onClick={handleShowCommands}
+            >
+              <Command className="mr-2 h-5 w-5" />
+              <span>{t('commands')}</span>
+            </Button>
+
+            {activeView === 'commands' && (
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="commands" className="border-b-0">
+                  <AccordionContent>
+                    <div className="py-2 pl-7 space-y-2">
+                      {Array.from({ length: 20 }).map((_, i) => (
+                        <Button
+                          key={i}
+                          variant="ghost"
+                          className="w-full justify-start text-sm"
+                        >
+                          {language === "fa" ? `دستور ${i + 1}` : `Command ${i + 1}`}
+                        </Button>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            )}
+            
             <Button 
               variant="ghost" 
               className="w-full justify-start" 
@@ -148,7 +159,12 @@ const Dashboard = () => {
       <div className="flex-1 h-screen flex flex-col">
         {/* Top Navigation Bar */}
         <div className="h-14 bg-background/50 backdrop-blur-md border-b border-border/50 flex items-center justify-between px-4">
-          <h2 className="text-lg font-semibold">{t('dashboard')}</h2>
+          <h2 className="text-lg font-semibold">
+            {activeView === 'dashboard' && t('dashboard')}
+            {activeView === 'settings' && t('settings')}
+            {activeView === 'statistics' && t('statistics')}
+            {activeView === 'commands' && t('commands')}
+          </h2>
           
           <div className="flex items-center space-x-2">
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
@@ -188,6 +204,23 @@ const Dashboard = () => {
           )}
           
           {activeView === 'statistics' && <CustomerStatistics />}
+          
+          {activeView === 'commands' && (
+            <div className="max-w-6xl mx-auto">
+              <Card className="p-6">
+                <h3 className="text-lg font-medium mb-4">
+                  {language === "fa" ? "لیست دستورات" : "Commands List"}
+                </h3>
+                <div className="space-y-2">
+                  {Array.from({ length: 20 }).map((_, i) => (
+                    <div key={i} className="p-2 border rounded">
+                      {language === "fa" ? `دستور ${i + 1}` : `Command ${i + 1}`}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          )}
           
           {activeView === 'dashboard' && searchedCustomer && (
             <div className="max-w-6xl mx-auto">
