@@ -1,13 +1,15 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useTheme } from "@/context/theme-context";
-import { downloadCustomerZip } from "@/lib/api";
+import { downloadCustomerZip, setServerUrl, getServerUrl } from "@/lib/api";
+import { toast } from "sonner";
 import type { Customer } from "@/lib/api";
 import { 
   User, Calendar, Clock, CreditCard, Phone, Mail, 
-  MapPin, FileIcon, Activity, Shield
+  MapPin, FileIcon, Activity, Shield, Settings
 } from "lucide-react";
 
 interface CustomerInfoPanelsProps {
@@ -17,6 +19,16 @@ interface CustomerInfoPanelsProps {
 const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
   const { language } = useTheme();
   const [downloading, setDownloading] = useState(false);
+  const [showServerSettings, setShowServerSettings] = useState(false);
+  const [serverUrl, setServerUrlState] = useState('');
+  
+  useEffect(() => {
+    const fetchServerUrl = async () => {
+      const url = await getServerUrl();
+      setServerUrlState(url);
+    };
+    fetchServerUrl();
+  }, []);
   
   const handleDownload = async () => {
     setDownloading(true);
@@ -26,6 +38,23 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
       setDownloading(false);
     }
   };
+  
+  const handleSaveServerUrl = async () => {
+    if (!serverUrl) {
+      toast.error("لطفا آدرس سرور را وارد کنید");
+      return;
+    }
+    
+    const success = await setServerUrl(serverUrl);
+    if (success) {
+      setShowServerSettings(false);
+      // Trigger a page reload to fetch new data
+      window.location.reload();
+    }
+  };
+  
+  // Extract any additional properties to show in panels
+  const additionalProps = customer.additionalProperties || {};
   
   const panels = [
     {
@@ -56,7 +85,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
       icon: Shield,
       content: (
         <div className="space-y-2">
-          <p className="text-xl font-bold">{customer.customerType}</p>
+          <p className="text-xl font-bold">{additionalProps['نوع'] || customer.customerType}</p>
         </div>
       ),
       color: "bg-purple-100 dark:bg-purple-900/20",
@@ -67,7 +96,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
       icon: Calendar,
       content: (
         <div className="space-y-2">
-          <p className="text-xl font-bold">{customer.registrationDate}</p>
+          <p className="text-xl font-bold">{additionalProps['تاریخ'] || customer.registrationDate}</p>
         </div>
       ),
       color: "bg-green-100 dark:bg-green-900/20",
@@ -78,7 +107,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
       icon: Clock,
       content: (
         <div className="space-y-2">
-          <p className="text-xl font-bold">{customer.lastActivity}</p>
+          <p className="text-xl font-bold">{additionalProps['فعالیت'] || customer.lastActivity}</p>
         </div>
       ),
       color: "bg-yellow-100 dark:bg-yellow-900/20",
@@ -89,7 +118,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
       icon: CreditCard,
       content: (
         <div className="space-y-2">
-          <p className="text-xl font-bold">{customer.totalTransactions}</p>
+          <p className="text-xl font-bold">{additionalProps['تراکنش'] || customer.totalTransactions}</p>
         </div>
       ),
       color: "bg-red-100 dark:bg-red-900/20",
@@ -103,10 +132,10 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
             <div 
               className="bg-pistachio-500 h-2.5 rounded-full" 
-              style={{ width: `${(customer.creditScore / 1000) * 100}%` }}
+              style={{ width: `${((Number(additionalProps['امتیاز']) || customer.creditScore) / 1000) * 100}%` }}
             ></div>
           </div>
-          <p className="text-xl font-bold">{customer.creditScore}</p>
+          <p className="text-xl font-bold">{additionalProps['امتیاز'] || customer.creditScore}</p>
         </div>
       ),
       color: "bg-indigo-100 dark:bg-indigo-900/20",
@@ -118,10 +147,10 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
       content: (
         <div className="space-y-2 text-sm">
           <p className="flex items-center">
-            <Mail className="h-4 w-4 mr-1" /> {customer.contactInfo.email}
+            <Mail className="h-4 w-4 mr-1" /> {additionalProps['ایمیل'] || customer.contactInfo.email}
           </p>
           <p className="flex items-center">
-            <Phone className="h-4 w-4 mr-1" /> {customer.contactInfo.phone}
+            <Phone className="h-4 w-4 mr-1" /> {additionalProps['تلفن'] || customer.contactInfo.phone}
           </p>
         </div>
       ),
@@ -133,28 +162,48 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
       icon: MapPin,
       content: (
         <div className="space-y-2">
-          <p className="text-sm">{customer.contactInfo.address}</p>
+          <p className="text-sm">{additionalProps['آدرس'] || customer.contactInfo.address}</p>
         </div>
       ),
       color: "bg-orange-100 dark:bg-orange-900/20",
       hoverColor: "hover:bg-orange-200 dark:hover:bg-orange-800/30"
     },
     {
-      title: language === "fa" ? "فایل پرونده" : "Customer File",
-      icon: FileIcon,
+      title: language === "fa" ? "تنظیمات سرور" : "Server Settings",
+      icon: Settings,
       content: (
         <div className="space-y-2">
-          <p className="text-sm mb-2">{customer.zipFileName}</p>
-          <Button 
-            size="sm" 
-            onClick={handleDownload} 
-            disabled={downloading}
-            className="w-full"
-          >
-            {downloading 
-              ? (language === "fa" ? "در حال دانلود..." : "Downloading...") 
-              : (language === "fa" ? "دانلود فایل" : "Download File")}
-          </Button>
+          {showServerSettings ? (
+            <>
+              <Input 
+                placeholder={language === "fa" ? "آدرس سرور" : "Server URL"}
+                value={serverUrl}
+                onChange={(e) => setServerUrlState(e.target.value)}
+                className="mb-2"
+              />
+              <Button 
+                size="sm" 
+                onClick={handleSaveServerUrl} 
+                className="w-full"
+              >
+                {language === "fa" ? "ذخیره آدرس" : "Save URL"}
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm mb-2 truncate">{serverUrl || (language === "fa" ? "آدرس سرور تنظیم نشده" : "Server URL not set")}</p>
+              <Button 
+                size="sm" 
+                onClick={() => setShowServerSettings(true)} 
+                className="w-full"
+              >
+                {language === "fa" ? "تنظیم آدرس سرور" : "Set Server URL"}
+              </Button>
+            </>
+          )}
+          <p className="text-xs text-muted-foreground mt-2">
+            {language === "fa" ? "آدرس فولدر: /var/www/html/uploads" : "Folder path: /var/www/html/uploads"}
+          </p>
         </div>
       ),
       color: "bg-cyan-100 dark:bg-cyan-900/20",
