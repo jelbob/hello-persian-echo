@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -23,6 +24,7 @@ const Dashboard = () => {
   const { theme, toggleTheme, language, toggleLanguage, t } = useTheme();
   const [searchId, setSearchId] = useState("");
   const [showStatistics, setShowStatistics] = useState(false);
+  const [showServerSettings, setShowServerSettings] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -59,6 +61,10 @@ const Dashboard = () => {
     setShowStatistics(true);
     setSearchId("");
     navigate("/dashboard");
+  };
+
+  const handleToggleServerSettings = () => {
+    setShowServerSettings(!showServerSettings);
   };
 
   return (
@@ -107,7 +113,11 @@ const Dashboard = () => {
               <span>{t('statistics')}</span>
             </Button>
             
-            <Button variant="ghost" className="w-full justify-start">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start"
+              onClick={handleToggleServerSettings}
+            >
               <Settings className="mr-2 h-5 w-5" />
               <span>{t('settings')}</span>
             </Button>
@@ -154,16 +164,20 @@ const Dashboard = () => {
             </form>
           </div>
           
+          {showServerSettings && (
+            <div className="max-w-6xl mx-auto mb-6">
+              <ServerSettings />
+            </div>
+          )}
+          
           {showStatistics ? (
             <CustomerStatistics />
           ) : searchedCustomer ? (
             <div className="max-w-6xl mx-auto">
-              <ServerSettings />
               <CustomerInfoPanels customer={searchedCustomer} />
             </div>
           ) : (
             <div className="max-w-6xl mx-auto">
-              <ServerSettings />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="bg-green-100 dark:bg-green-900/20 glass-morphism animate-fade-in">
                   <CardHeader className="pb-2">

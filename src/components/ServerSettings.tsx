@@ -11,7 +11,7 @@ import { useTheme } from "@/context/theme-context";
 const ServerSettings = () => {
   const { language } = useTheme();
   const [serverUrl, setServerUrlState] = useState('');
-  const [showSettings, setShowSettings] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchServerUrl = async () => {
@@ -27,10 +27,17 @@ const ServerSettings = () => {
       return;
     }
 
-    const success = await setServerUrl(serverUrl);
-    if (success) {
-      setShowSettings(false);
-      window.location.reload();
+    setIsLoading(true);
+    try {
+      const success = await setServerUrl(serverUrl);
+      if (success) {
+        toast.success(language === "fa" ? "آدرس سرور با موفقیت ذخیره شد" : "Server URL saved successfully");
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Error saving server URL:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -43,35 +50,22 @@ const ServerSettings = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {showSettings ? (
-          <>
-            <Input 
-              placeholder={language === "fa" ? "آدرس سرور" : "Server URL"}
-              value={serverUrl}
-              onChange={(e) => setServerUrlState(e.target.value)}
-              className="mb-2"
-              dir="ltr"
-            />
-            <Button 
-              onClick={handleSaveServerUrl} 
-              className="w-full"
-            >
-              {language === "fa" ? "ذخیره آدرس" : "Save URL"}
-            </Button>
-          </>
-        ) : (
-          <>
-            <p className="text-sm mb-2 truncate" dir="ltr">
-              {serverUrl || (language === "fa" ? "آدرس سرور تنظیم نشده" : "Server URL not set")}
-            </p>
-            <Button 
-              onClick={() => setShowSettings(true)} 
-              className="w-full"
-            >
-              {language === "fa" ? "تنظیم آدرس سرور" : "Set Server URL"}
-            </Button>
-          </>
-        )}
+        <Input 
+          placeholder={language === "fa" ? "آدرس سرور" : "Server URL"}
+          value={serverUrl}
+          onChange={(e) => setServerUrlState(e.target.value)}
+          className="mb-2"
+          dir="ltr"
+        />
+        <Button 
+          onClick={handleSaveServerUrl} 
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading 
+            ? (language === "fa" ? "در حال ذخیره..." : "Saving...") 
+            : (language === "fa" ? "ذخیره آدرس" : "Save URL")}
+        </Button>
         <p className="text-xs text-muted-foreground mt-2">
           {language === "fa" ? "آدرس فولدر: /var/www/html/uploads" : "Folder path: /var/www/html/uploads"}
         </p>
