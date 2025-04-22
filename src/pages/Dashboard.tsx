@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CustomerInfoPanels from "@/components/CustomerInfoPanels";
 import RecentCustomersList from "@/components/RecentCustomersList";
 import CustomerStatistics from "@/components/CustomerStatistics";
+import ServerSettings from "@/components/ServerSettings";
 import { searchCustomerById } from "@/lib/api";
 import type { Customer } from "@/lib/api";
 
@@ -157,10 +158,12 @@ const Dashboard = () => {
             <CustomerStatistics />
           ) : searchedCustomer ? (
             <div className="max-w-6xl mx-auto">
+              <ServerSettings />
               <CustomerInfoPanels customer={searchedCustomer} />
             </div>
           ) : (
             <div className="max-w-6xl mx-auto">
+              <ServerSettings />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="bg-green-100 dark:bg-green-900/20 glass-morphism animate-fade-in">
                   <CardHeader className="pb-2">

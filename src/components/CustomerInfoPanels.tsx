@@ -1,11 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useTheme } from "@/context/theme-context";
-import { downloadCustomerZip, setServerUrl, getServerUrl } from "@/lib/api";
-import { toast } from "sonner";
+import { downloadCustomerZip } from "@/lib/api";
 import type { Customer } from "@/lib/api";
 import { 
   User, Calendar, Clock, CreditCard, Phone, Mail, 
@@ -19,16 +16,6 @@ interface CustomerInfoPanelsProps {
 const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
   const { language } = useTheme();
   const [downloading, setDownloading] = useState(false);
-  const [showServerSettings, setShowServerSettings] = useState(false);
-  const [serverUrl, setServerUrlState] = useState('');
-  
-  useEffect(() => {
-    const fetchServerUrl = async () => {
-      const url = await getServerUrl();
-      setServerUrlState(url);
-    };
-    fetchServerUrl();
-  }, []);
   
   const handleDownload = async () => {
     setDownloading(true);
@@ -36,20 +23,6 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
       await downloadCustomerZip(customer.zipFileName);
     } finally {
       setDownloading(false);
-    }
-  };
-  
-  const handleSaveServerUrl = async () => {
-    if (!serverUrl) {
-      toast.error("لطفا آدرس سرور را وارد کنید");
-      return;
-    }
-    
-    const success = await setServerUrl(serverUrl);
-    if (success) {
-      setShowServerSettings(false);
-      // Trigger a page reload to fetch new data
-      window.location.reload();
     }
   };
   
@@ -167,47 +140,6 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
       ),
       color: "bg-orange-100 dark:bg-orange-900/20",
       hoverColor: "hover:bg-orange-200 dark:hover:bg-orange-800/30"
-    },
-    {
-      title: language === "fa" ? "تنظیمات سرور" : "Server Settings",
-      icon: Settings,
-      content: (
-        <div className="space-y-2">
-          {showServerSettings ? (
-            <>
-              <Input 
-                placeholder={language === "fa" ? "آدرس سرور" : "Server URL"}
-                value={serverUrl}
-                onChange={(e) => setServerUrlState(e.target.value)}
-                className="mb-2"
-              />
-              <Button 
-                size="sm" 
-                onClick={handleSaveServerUrl} 
-                className="w-full"
-              >
-                {language === "fa" ? "ذخیره آدرس" : "Save URL"}
-              </Button>
-            </>
-          ) : (
-            <>
-              <p className="text-sm mb-2 truncate">{serverUrl || (language === "fa" ? "آدرس سرور تنظیم نشده" : "Server URL not set")}</p>
-              <Button 
-                size="sm" 
-                onClick={() => setShowServerSettings(true)} 
-                className="w-full"
-              >
-                {language === "fa" ? "تنظیم آدرس سرور" : "Set Server URL"}
-              </Button>
-            </>
-          )}
-          <p className="text-xs text-muted-foreground mt-2">
-            {language === "fa" ? "آدرس فولدر: /var/www/html/uploads" : "Folder path: /var/www/html/uploads"}
-          </p>
-        </div>
-      ),
-      color: "bg-cyan-100 dark:bg-cyan-900/20",
-      hoverColor: "hover:bg-cyan-200 dark:hover:bg-cyan-800/30"
     },
   ];
 
