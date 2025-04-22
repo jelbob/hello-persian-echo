@@ -1,10 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { 
-  Search, Settings, LogOut, BarChart, Command, ChevronDown, Moon, Sun, Globe, 
-  BarChart2, Users, AlertCircle, Layers
+  Search, Settings, LogOut, Command, Globe, Moon, Sun, Users, AlertCircle, Layers
 } from "lucide-react";
 import { useTheme } from "@/context/theme-context";
 import { useAuth } from "@/context/auth-context";
@@ -23,8 +21,7 @@ const Dashboard = () => {
   const { logout } = useAuth();
   const { theme, toggleTheme, language, toggleLanguage, t } = useTheme();
   const [searchId, setSearchId] = useState("");
-  const [showStatistics, setShowStatistics] = useState(false);
-  const [showServerSettings, setShowServerSettings] = useState(false);
+  const [activeView, setActiveView] = useState<'dashboard' | 'statistics' | 'settings' | 'commands'>('dashboard');
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -35,7 +32,7 @@ const Dashboard = () => {
     if (customerIdFromUrl) {
       setSearchId(customerIdFromUrl);
       refetchCustomer();
-      setShowStatistics(false);
+      setActiveView('dashboard');
     }
   }, [customerIdFromUrl]);
   
@@ -53,18 +50,32 @@ const Dashboard = () => {
     if (searchId.trim().length > 0) {
       navigate(`/dashboard?customerId=${searchId}`);
       refetchCustomer();
-      setShowStatistics(false);
+      setActiveView('dashboard');
     }
   };
 
   const handleShowStatistics = () => {
-    setShowStatistics(true);
+    setActiveView('statistics');
     setSearchId("");
     navigate("/dashboard");
   };
 
-  const handleToggleServerSettings = () => {
-    setShowServerSettings(!showServerSettings);
+  const handleShowCommands = () => {
+    setActiveView('commands');
+    setSearchId("");
+    navigate("/dashboard");
+  };
+
+  const handleShowSettings = () => {
+    setActiveView('settings');
+    setSearchId("");
+    navigate("/dashboard");
+  };
+
+  const handleShowDashboard = () => {
+    setActiveView('dashboard');
+    setSearchId("");
+    navigate("/dashboard");
   };
 
   return (
@@ -75,14 +86,17 @@ const Dashboard = () => {
       {/* Left Sidebar */}
       <div className="w-64 h-screen bg-sidebar glass-morphism border-r border-border/50 flex flex-col">
         <div className="p-4 border-b border-border/50">
-          <h1 className="text-xl font-bold">DNA Admin</h1>
+          <h1 className="text-xl font-bold cursor-pointer" onClick={handleShowDashboard}>DNA Admin</h1>
         </div>
         
         <div className="flex-1 overflow-auto p-4">
           <nav className="space-y-4">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="commands" className="border-b-0">
-                <AccordionTrigger className="py-2 px-3 rounded-md hover:bg-sidebar-accent transition-colors">
+                <AccordionTrigger 
+                  className="py-2 px-3 rounded-md hover:bg-sidebar-accent transition-colors"
+                  onClick={handleShowCommands}
+                >
                   <div className="flex items-center">
                     <Command className="mr-2 h-5 w-5" />
                     <span>{t('commands')}</span>
@@ -109,14 +123,14 @@ const Dashboard = () => {
               className="w-full justify-start" 
               onClick={handleShowStatistics}
             >
-              <BarChart className="mr-2 h-5 w-5" />
+              <Settings className="mr-2 h-5 w-5" />
               <span>{t('statistics')}</span>
             </Button>
             
             <Button 
               variant="ghost" 
               className="w-full justify-start"
-              onClick={handleToggleServerSettings}
+              onClick={handleShowSettings}
             >
               <Settings className="mr-2 h-5 w-5" />
               <span>{t('settings')}</span>
@@ -148,35 +162,40 @@ const Dashboard = () => {
         
         {/* Main Content Area */}
         <div className="flex-1 overflow-auto p-6">
-          {/* Search Box */}
-          <div className="w-full max-w-xl mx-auto mb-8">
-            <form onSubmit={handleSearch} className="flex space-x-2">
-              <Input
-                placeholder={t('searchCustomer')}
-                value={searchId}
-                onChange={(e) => setSearchId(e.target.value)}
-                className="flex-1"
-              />
-              <Button type="submit">
-                <Search className="h-4 w-4 mr-2" />
-                {t('search')}
-              </Button>
-            </form>
-          </div>
+          {/* Search Box - Only show in dashboard view */}
+          {activeView === 'dashboard' && (
+            <div className="w-full max-w-xl mx-auto mb-8">
+              <form onSubmit={handleSearch} className="flex space-x-2">
+                <Input
+                  placeholder={t('searchCustomer')}
+                  value={searchId}
+                  onChange={(e) => setSearchId(e.target.value)}
+                  className="flex-1"
+                />
+                <Button type="submit">
+                  <Search className="h-4 w-4 mr-2" />
+                  {t('search')}
+                </Button>
+              </form>
+            </div>
+          )}
           
-          {showServerSettings && (
+          {/* Show content based on active view */}
+          {activeView === 'settings' && (
             <div className="max-w-6xl mx-auto mb-6">
               <ServerSettings />
             </div>
           )}
           
-          {showStatistics ? (
-            <CustomerStatistics />
-          ) : searchedCustomer ? (
+          {activeView === 'statistics' && <CustomerStatistics />}
+          
+          {activeView === 'dashboard' && searchedCustomer && (
             <div className="max-w-6xl mx-auto">
               <CustomerInfoPanels customer={searchedCustomer} />
             </div>
-          ) : (
+          )}
+          
+          {activeView === 'dashboard' && !searchedCustomer && (
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="bg-green-100 dark:bg-green-900/20 glass-morphism animate-fade-in">
