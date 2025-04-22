@@ -3,9 +3,18 @@ import { toast } from "sonner";
 import { createClient } from "@supabase/supabase-js";
 
 // Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Check if Supabase credentials are available
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("Supabase credentials are missing. Make sure to set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.");
+}
+
+// Create Supabase client with fallback for development
+const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 // Define Customer type
 export type Customer = {
@@ -51,6 +60,12 @@ const mockCustomers: Customer[] = Array.from({ length: 20 }, (_, i) => {
 // Get real files from server using Supabase Edge Function
 export const getRealCustomerFiles = async (serverUrl?: string): Promise<Customer[]> => {
   try {
+    // Check if Supabase is initialized
+    if (!supabase) {
+      console.error("Supabase client is not initialized");
+      return mockCustomers;
+    }
+
     // Call the Supabase Edge Function
     const { data, error } = await supabase.functions.invoke("get-customer-files", {
       body: { serverUrl },
@@ -168,6 +183,13 @@ export const getCustomerStatistics = async () => {
 // Download customer zip file
 export const downloadCustomerZip = async (zipFileName: string): Promise<boolean> => {
   try {
+    // Check if Supabase is initialized
+    if (!supabase) {
+      console.error("Supabase client is not initialized");
+      toast.error(`خطا در دانلود فایل "${zipFileName}"`);
+      return false;
+    }
+
     // Call the Supabase Edge Function to download the file
     const { data, error } = await supabase.functions.invoke("download-customer-file", {
       body: { fileName: zipFileName },
@@ -210,6 +232,13 @@ export const downloadCustomerZip = async (zipFileName: string): Promise<boolean>
 // Set server URL for customer files
 export const setServerUrl = async (url: string): Promise<boolean> => {
   try {
+    // Check if Supabase is initialized
+    if (!supabase) {
+      console.error("Supabase client is not initialized");
+      toast.error("خطا در ذخیره آدرس سرور");
+      return false;
+    }
+
     // Store server URL in Supabase
     const { error } = await supabase
       .from('settings')
@@ -233,6 +262,12 @@ export const setServerUrl = async (url: string): Promise<boolean> => {
 // Get server URL for customer files
 export const getServerUrl = async (): Promise<string> => {
   try {
+    // Check if Supabase is initialized
+    if (!supabase) {
+      console.error("Supabase client is not initialized");
+      return '';
+    }
+
     const { data, error } = await supabase
       .from('settings')
       .select('value')
