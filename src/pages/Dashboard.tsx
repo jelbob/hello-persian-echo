@@ -211,16 +211,20 @@ const Dashboard = () => {
           {activeView === 'commands' && (
             <div className="max-w-6xl mx-auto">
               <Card className="p-6">
-                <h3 className="text-lg font-medium mb-4">
-                  {language === "fa" ? "لیست دستورات" : "Commands List"}
-                </h3>
-                <div className="space-y-2">
-                  {Array.from({ length: 20 }).map((_, i) => (
-                    <div key={i} className="p-2 border rounded">
-                      {language === "fa" ? `دستور ${i + 1}` : `Command ${i + 1}`}
-                    </div>
-                  ))}
-                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg font-medium mb-4">
+                    {language === "fa" ? "لیست دستورات" : "Commands List"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <div key={i} className="p-2 border rounded">
+                        {language === "fa" ? `دستور ${i + 1}` : `Command ${i + 1}`}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
               </Card>
             </div>
           )}
