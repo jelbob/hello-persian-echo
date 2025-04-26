@@ -2,14 +2,17 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { 
-  Search, Settings, LogOut, Command, Globe, Moon, Sun 
+  Search, Settings, LogOut, Command, Globe, Moon, Sun,
+  Users, Layers, AlertCircle
 } from "lucide-react";
 import { useTheme } from "@/context/theme-context";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Card } from "@/components/ui/card";
+import { 
+  Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter
+} from "@/components/ui/card";
 import CustomerInfoPanels from "@/components/CustomerInfoPanels";
 import RecentCustomersList from "@/components/RecentCustomersList";
 import CustomerStatistics from "@/components/CustomerStatistics";
