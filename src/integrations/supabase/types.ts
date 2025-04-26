@@ -9,7 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          additional_properties: Json | null
+          contact_info: Json | null
+          created_at: string | null
+          credit_score: number | null
+          customer_type: string | null
+          id: string
+          last_activity: string | null
+          name: string | null
+          registration_date: string | null
+          status: string | null
+          total_transactions: number | null
+          zip_file_name: string
+        }
+        Insert: {
+          additional_properties?: Json | null
+          contact_info?: Json | null
+          created_at?: string | null
+          credit_score?: number | null
+          customer_type?: string | null
+          id: string
+          last_activity?: string | null
+          name?: string | null
+          registration_date?: string | null
+          status?: string | null
+          total_transactions?: number | null
+          zip_file_name: string
+        }
+        Update: {
+          additional_properties?: Json | null
+          contact_info?: Json | null
+          created_at?: string | null
+          credit_score?: number | null
+          customer_type?: string | null
+          id?: string
+          last_activity?: string | null
+          name?: string | null
+          registration_date?: string | null
+          status?: string | null
+          total_transactions?: number | null
+          zip_file_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
