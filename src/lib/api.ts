@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { createClient } from "@supabase/supabase-js";
 
@@ -6,13 +5,11 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Check if Supabase credentials are available
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error("Supabase credentials are missing. Make sure to set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.");
 }
 
-// Create Supabase client with fallback for development
-const supabase = supabaseUrl && supabaseAnonKey 
+const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
@@ -32,11 +29,9 @@ export type Customer = {
     phone: string;
     address: string;
   };
-  // Add additional properties from real files
   additionalProperties?: Record<string, string>;
 };
 
-// Mock customer data (will be used as fallback if server connection fails)
 const mockCustomers: Customer[] = Array.from({ length: 20 }, (_, i) => {
   const id = `CUST${String(i + 1).padStart(12, "0")}`;
   return {
@@ -54,15 +49,84 @@ const mockCustomers: Customer[] = Array.from({ length: 20 }, (_, i) => {
       phone: `09${Math.floor(Math.random() * 1000000000)}`,
       address: `آدرس مثال ${i + 1}، تهران، ایران`,
     },
+    additionalProperties: {},
   };
 });
+
+// --- UTIL: Fetch server url once & cache it for all API calls ---
+let _serverUrl: string | null = null;
+let _fetchServerUrlPromise: Promise<string> | null = null;
+
+export const getServerUrl = async (): Promise<string> => {
+  if (_serverUrl) return _serverUrl;
+  if (_fetchServerUrlPromise) return _fetchServerUrlPromise;
+
+  if (!supabase) {
+    console.error("Supabase client is not initialized");
+    return '';
+  }
+
+  _fetchServerUrlPromise = supabase
+    .from('settings')
+    .select('value')
+    .eq('key', 'server_url')
+    .single()
+    .then(({ data, error }) => {
+      if (error || !data) {
+        _serverUrl = '';
+        return '';
+      }
+      _serverUrl = data.value;
+      return _serverUrl;
+    })
+    .finally(() => {
+      _fetchServerUrlPromise = null;
+    });
+
+  return _fetchServerUrlPromise;
+};
+
+export const setServerUrl = async (url: string): Promise<boolean> => {
+  try {
+    if (!supabase) {
+      console.error("Supabase client is not initialized");
+      toast.error("خطا در ذخیره آدرس سرور");
+      return false;
+    }
+    const { error } = await supabase
+      .from('settings')
+      .upsert({ key: 'server_url', value: url });
+
+    if (error) {
+      console.error("Error saving server URL:", error);
+      toast.error("خطا در ذخیره آدرس سرور");
+      return false;
+    }
+    _serverUrl = url; // update cached value
+    toast.success("آدرس سرور با موفقیت ذخیره شد");
+    return true;
+  } catch (err) {
+    console.error("Error in setServerUrl:", err);
+    toast.error("خطا در ذخیره آدرس سرور");
+    return false;
+  }
+};
+
+// --- CUSTOMER FILES ---
 
 // Get real files from server using Supabase Edge Function
 export const getRealCustomerFiles = async (serverUrl?: string): Promise<Customer[]> => {
   try {
-    // Check if Supabase is initialized
     if (!supabase) {
       console.error("Supabase client is not initialized");
+      return mockCustomers;
+    }
+    if (!serverUrl) {
+      serverUrl = await getServerUrl();
+    }
+    if (!serverUrl) {
+      console.error("Server URL not found");
+      toast.error("آدرس سرور پیدا نشد");
       return mockCustomers;
     }
 
@@ -71,58 +135,28 @@ export const getRealCustomerFiles = async (serverUrl?: string): Promise<Customer
       body: { serverUrl },
     });
 
-    if (error) {
+    if (error || !data || !data.customers) {
       console.error("Error getting customer files:", error);
       toast.error("خطا در دریافت فایل‌های مشتریان");
       return mockCustomers;
     }
 
-    // Process the data to match our Customer type
-    const customers: Customer[] = data.files.map((file: any) => {
-      // Extract customer ID from first 16 characters of filename
-      const customerId = file.name.substring(0, 16);
-      // Extract properties from the next 10 characters
-      const property = file.name.substring(16, 26).trim();
-      
-      // Create a base customer object 
-      const customer: Customer = {
-        id: customerId,
-        zipFileName: file.name,
-        name: property || "مشتری جدید",
-        status: "active",
-        customerType: "حقیقی",
-        registrationDate: new Date().toISOString().split("T")[0],
-        lastActivity: new Date().toISOString().split("T")[0],
-        totalTransactions: 0,
-        creditScore: 500,
-        contactInfo: {
-          email: "",
-          phone: "",
-          address: "",
-        },
-        additionalProperties: {
-          [property]: file.content || "",
-        }
-      };
-      
-      return customer;
-    });
+    // خروجی فانکشن جدید را به عنوان مشتریان واقعی برمی‌گردانیم
+    const customers: Customer[] = data.customers.map((c: any) => ({
+      id: c.id,
+      zipFileName: c.zipFileName,
+      name: c.name || "مشتری جدید",
+      status: c.status || "active",
+      customerType: c.customerType || "حقیقی",
+      registrationDate: c.registrationDate || new Date().toISOString().split("T")[0],
+      lastActivity: c.lastActivity || new Date().toISOString().split("T")[0],
+      totalTransactions: c.totalTransactions || 0,
+      creditScore: c.creditScore || 500,
+      contactInfo: c.contactInfo || { email: "", phone: "", address: "" },
+      additionalProperties: c.additionalProperties || {},
+    }));
 
-    // Group files by customerId and merge properties
-    const groupedCustomers = customers.reduce((acc: Record<string, Customer>, curr: Customer) => {
-      if (!acc[curr.id]) {
-        acc[curr.id] = curr;
-      } else {
-        // Merge additionalProperties
-        acc[curr.id].additionalProperties = {
-          ...acc[curr.id].additionalProperties,
-          ...curr.additionalProperties
-        };
-      }
-      return acc;
-    }, {});
-
-    return Object.values(groupedCustomers);
+    return customers;
   } catch (err) {
     console.error("Error in getRealCustomerFiles:", err);
     toast.error("خطا در دریافت فایل‌های مشتریان");
@@ -130,7 +164,6 @@ export const getRealCustomerFiles = async (serverUrl?: string): Promise<Customer
   }
 };
 
-// Get recent customers (last 10)
 export const getRecentCustomers = async (): Promise<Customer[]> => {
   try {
     const customers = await getRealCustomerFiles();
@@ -141,7 +174,6 @@ export const getRecentCustomers = async (): Promise<Customer[]> => {
   }
 };
 
-// Search customer by ID
 export const searchCustomerById = async (customerId: string): Promise<Customer | null> => {
   try {
     const customers = await getRealCustomerFiles();
@@ -154,7 +186,6 @@ export const searchCustomerById = async (customerId: string): Promise<Customer |
   }
 };
 
-// Get all customers
 export const getAllCustomers = async (): Promise<Customer[]> => {
   try {
     return await getRealCustomerFiles();
@@ -164,9 +195,7 @@ export const getAllCustomers = async (): Promise<Customer[]> => {
   }
 };
 
-// Get customer statistics 
 export const getCustomerStatistics = async () => {
-  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 600));
   
   return {
@@ -180,107 +209,100 @@ export const getCustomerStatistics = async () => {
   };
 };
 
-// Download customer zip file
-export const downloadCustomerZip = async (zipFileName: string): Promise<boolean> => {
+// --- FILE DOWNLOAD/DELETE APIS ---
+
+export const downloadCustomerZip = async (zipFileNamePart: string): Promise<boolean> => {
   try {
-    // Check if Supabase is initialized
-    if (!supabase) {
-      console.error("Supabase client is not initialized");
-      toast.error(`خطا در دانلود فایل "${zipFileName}"`);
+    if (zipFileNamePart.toLowerCase().endsWith('.zip')) {
+      zipFileNamePart = zipFileNamePart.slice(0, -4);
+    }
+
+    const serverUrl = await getServerUrl();
+    if (!serverUrl) {
+      alert("آدرس سرور فایل تنظیم نشده است.");
+      return false;
+    }
+    // دریافت لیست فایل‌ها
+    const jsonUrl = `${serverUrl}/files.json.php`;
+    const filesResponse = await fetch(jsonUrl);
+    if (!filesResponse.ok) {
+      alert("خطا در دریافت لیست فایل‌ها از سرور");
+      return false;
+    }
+    const files: { name: string }[] = await filesResponse.json();
+
+    const matchedFiles = files.filter(f =>
+      f.name.toLowerCase().startsWith(zipFileNamePart.toLowerCase())
+    );
+    if (matchedFiles.length === 0) {
+      alert(`هیچ فایلی که با "${zipFileNamePart}" شروع شود پیدا نشد.`);
       return false;
     }
 
-    // Call the Supabase Edge Function to download the file
-    const { data, error } = await supabase.functions.invoke("download-customer-file", {
-      body: { fileName: zipFileName },
+    const extractTimestamp = (fileName: string) => {
+      const match = fileName.match(/\d{14}/);
+      return match ? match[0] : '';
+    };
+    matchedFiles.sort((a, b) => {
+      const tA = extractTimestamp(a.name);
+      const tB = extractTimestamp(b.name);
+      return tB.localeCompare(tA);
     });
+    const latestFile = matchedFiles[0];
 
-    if (error) {
-      console.error("Error downloading customer file:", error);
-      toast.error(`خطا در دانلود فایل "${zipFileName}"`);
-      return false;
-    }
+    // نکته: مسیر uploads را اضافه می‌کنیم
+    const url = `${serverUrl}/uploads/${latestFile.name}`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = latestFile.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 
-    // Create a download link for the file
-    if (data.fileContent) {
-      const blob = new Blob([new Uint8Array(data.fileContent)], { type: 'application/zip' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = zipFileName;
-      document.body.appendChild(a);
-      a.click();
-      URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      toast.success(`دریافت فایل "${zipFileName}" با موفقیت انجام شد.`);
-      return true;
-    } else {
-      toast.error(`فایل "${zipFileName}" پیدا نشد.`);
-      return false;
-    }
-  } catch (err) {
-    console.error("Error in downloadCustomerZip:", err);
-    toast.error(`خطا در دانلود فایل "${zipFileName}"`);
-    
-    // Fallback to mock behavior
-    toast.success(`دریافت فایل "${zipFileName}" شروع شد.`);
-    return true;
-  }
-};
-
-// Set server URL for customer files
-export const setServerUrl = async (url: string): Promise<boolean> => {
-  try {
-    // Check if Supabase is initialized
-    if (!supabase) {
-      console.error("Supabase client is not initialized");
-      toast.error("خطا در ذخیره آدرس سرور");
-      return false;
-    }
-
-    // Store server URL in Supabase
-    const { error } = await supabase
-      .from('settings')
-      .upsert({ key: 'server_url', value: url });
-
-    if (error) {
-      console.error("Error saving server URL:", error);
-      toast.error("خطا در ذخیره آدرس سرور");
-      return false;
-    }
-
-    toast.success("آدرس سرور با موفقیت ذخیره شد");
     return true;
   } catch (err) {
-    console.error("Error in setServerUrl:", err);
-    toast.error("خطا در ذخیره آدرس سرور");
+    console.error("خطا:", err);
+    alert(`خطا در دانلود فایل "${zipFileNamePart}"`);
     return false;
   }
 };
 
-// Get server URL for customer files
-export const getServerUrl = async (): Promise<string> => {
+export const downloadCustomerAllFilesZip = async (customerId: string): Promise<boolean> => {
   try {
-    // Check if Supabase is initialized
-    if (!supabase) {
-      console.error("Supabase client is not initialized");
-      return '';
+    const serverUrl = await getServerUrl();
+    if (!serverUrl) {
+      alert("آدرس سرور فایل تنظیم نشده است.");
+      return false;
     }
+    // حذف /uploads انتهای آدرس برای رسیدن به ریشه دامنه
+    const baseServerUrl = serverUrl.replace(/\/uploads\/?$/, "");
+    const url = `${baseServerUrl}/download_customer_zip.php?customerId=${encodeURIComponent(customerId)}`;
 
-    const { data, error } = await supabase
-      .from('settings')
-      .select('value')
-      .eq('key', 'server_url')
-      .single();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 
-    if (error || !data) {
-      return '';
-    }
-
-    return data.value;
+    return true;
   } catch (err) {
-    console.error("Error in getServerUrl:", err);
-    return '';
+    console.error("خطا:", err);
+    alert("خطا در دانلود فایل زیپ کلی مشتری");
+    return false;
   }
 };
+
+export async function deleteCustomerFilesByPattern(pattern: string): Promise<string> {
+  const serverUrl = await getServerUrl();
+  if (!serverUrl) throw new Error("آدرس سرور فایل تنظیم نشده است.");
+
+  const response = await fetch(`${serverUrl}/delete_customer_files_by_pattern.php`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `pattern=${encodeURIComponent(pattern)}`
+  });
+  const text = await response.text();
+  if (!response.ok) throw new Error(text || "خطا در حذف فایل‌ها");
+  return text;
+}
