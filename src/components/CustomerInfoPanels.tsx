@@ -93,12 +93,12 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
   const [downloadingIndex, setDownloadingIndex] = useState<number | null>(null);
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
 
-  const [properties, setProperties] = useState<Record<string, string>>(
-    customer?.additionalProperties || {}
-  );
+  // همیشه properties و hasMainZip را با تغییر customer ریست کن!
+  const [properties, setProperties] = useState<Record<string, string>>(customer?.additionalProperties || {});
   const [hasMainZip, setHasMainZip] = useState(false);
 
   useEffect(() => {
+    setProperties(customer?.additionalProperties || {});
     const checkMainZipExists = async () => {
       try {
         const res = await fetch(`/uploads/${customer.id}_.zip`, { method: "HEAD" });
@@ -108,13 +108,13 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
       }
     };
     checkMainZipExists();
-  }, [customer.id]);
+  }, [customer.id, customer.additionalProperties]);
 
   // panels array
   const panels = FEATURE_KEYS.map((propertyName, idx) => {
     const Icon = FEATURE_ICONS[propertyName] || Download;
     const value = properties[propertyName] || "";
-    const isActive = !!value; // فعال بودن باکس بر اساس وجود فایل
+    const isActive = !!value;
 
     // pattern برای حذف همه فایل‌های این ویژگی
     const pattern = `${customer.id}${propertyName}*`;
@@ -177,23 +177,23 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
                   ) {
                     setDeletingIndex(idx);
                     try {
-                      const result = await deleteCustomerFilesByPattern(mainZipPattern);
-                      alert(result);
-                      setHasMainZip(false);
-                      if (
-                        !FEATURE_KEYS.slice(0, 11).some((key) =>
-                          !!properties[key]
-                        )
-                      ) {
-                        setTimeout(() => {
-                          window.location.reload();
-                        }, 700);
-                      }
-                    } catch (err: any) {
-                      alert(
-                        "Error deleting main zip file: " +
-                          (err?.message || err)
-                      );
+					  const result = await deleteCustomerFilesByPattern(mainZipPattern);
+					  alert(result);
+					  const res = await fetch(`/uploads/${customer.id}_.zip`, { method: "HEAD" });
+					  setHasMainZip(res.ok);
+					  if (
+						!res.ok &&
+						!FEATURE_KEYS.slice(0, 11).some((key) => !!properties[key])
+					  ) {
+						setTimeout(() => {
+						  window.location.reload();
+						}, 700);
+					  }
+					} catch (err: any) {
+					  alert(
+						"Error deleting main zip file: " +
+						(err?.message || err)
+					  );
                     } finally {
                       setDeletingIndex(null);
                     }
@@ -215,8 +215,6 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
       isActive,
       content: (
         <div className="flex flex-col min-h-[60px] justify-between">
-          {/* فقط خود مقدار فایل را نمایش نده! اگر فقط اکتیو بودن مهم است */}
-          {/* اگر دوست داشتی این خط را فعال کن تا مثلا یک تیک سبز نمایش بده */}
           {isActive && (
             <div className="flex items-center justify-center text-green-600 text-2xl py-2">
               <span>✔️</span>
@@ -281,6 +279,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
                       delete newProps[propertyName];
                       return newProps;
                     });
+                    // اگر همه ویژگی‌ها و فایل کلی حذف شد، رفرش (یعنی مشتری حذف شده)
                     if (
                       !hasMainZip &&
                       !FEATURE_KEYS.slice(0, 11).some((key) =>
