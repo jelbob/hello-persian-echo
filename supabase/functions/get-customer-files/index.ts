@@ -12,18 +12,16 @@ serve(async (req)=>{
   try {
     const { serverUrl } = await req.json();
     if (!serverUrl) throw new Error("Server URL is required");
-    const response = await fetch(`${serverUrl}/files.json`);
+    let filesUrl = serverUrl.endsWith("/") ? serverUrl.slice(0, -1) : serverUrl;
+    filesUrl += "/files.json.php";
+    const response = await fetch(filesUrl);
     if (!response.ok) throw new Error("Failed to fetch files from server");
     const files = await response.json();
-    // گروه‌بندی فایل‌ها بر اساس شناسه مشتری و ساخت ویژگی‌ها
     const customers = {};
     for (const file of files){
-      // فرض می‌کنیم customerId هنوز از ابتدای اسم فایل تا قبل از property است (مثلاً 16 کاراکتر)
       const customerId = file.name.substring(0, 16);
-      // جدا کردن property: فقط حروف اول تا اولین عدد
-      const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
-      const match = fileNameWithoutExt.substring(16).match(/^([^\d]+)/);
-      const property = match ? match[1] : fileNameWithoutExt.substring(16);
+      const afterId = file.name.substring(16);
+      const property = afterId.match(/^[^\d]+/)?.[0] || "Unknown";
       if (!customers[customerId]) {
         customers[customerId] = {
           id: customerId,
@@ -43,7 +41,8 @@ serve(async (req)=>{
           additionalProperties: {}
         };
       }
-      customers[customerId].additionalProperties[property] = file.content || "";
+      // مقدار property را نام فایل قرار بده
+      customers[customerId].additionalProperties[property] = file.name;
     }
     return new Response(JSON.stringify({
       customers: Object.values(customers)
@@ -54,7 +53,6 @@ serve(async (req)=>{
       }
     });
   } catch (error) {
-    console.error("Error in get-customer-files:", error);
     return new Response(JSON.stringify({
       error: error.message
     }), {
