@@ -66,9 +66,7 @@ const ServerSettings = () => {
             ? (language === "fa" ? "در حال ذخیره..." : "Saving...") 
             : (language === "fa" ? "ذخیره آدرس" : "Save URL")}
         </Button>
-        <p className="text-xs text-muted-foreground mt-2">
-          {language === "fa" ? "آدرس فولدر: /var/www/html/uploads" : "Folder path: /var/www/html/uploads"}
-        </p>
+       
       </CardContent>
     </Card>
   );
