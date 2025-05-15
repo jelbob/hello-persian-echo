@@ -1,17 +1,5 @@
 import { toast } from "sonner";
-import { createClient } from "@supabase/supabase-js";
-
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("Supabase credentials are missing. Make sure to set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.");
-}
-
-const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
+import { supabase } from "./supabaseClient";
 
 // Define Customer type
 export type Customer = {
@@ -305,4 +293,24 @@ export async function deleteCustomerFilesByPattern(pattern: string): Promise<str
   const text = await response.text();
   if (!response.ok) throw new Error(text || "خطا در حذف فایل‌ها");
   return text;
+}
+
+// --- AUTH: LOGIN/LOGOUT ---
+
+export async function login(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+
+export function getCurrentUser() {
+  return supabase.auth.getUser();
+}
+
+export async function logout() {
+  await supabase.auth.signOut();
 }
