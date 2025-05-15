@@ -40,8 +40,7 @@ serve(async (req)=>{
           },
           additionalProperties: {}
         };
-      }
-      // مقدار property را نام فایل قرار بده
+      }     
       customers[customerId].additionalProperties[property] = file.name;
     }
     return new Response(JSON.stringify({
