@@ -20,9 +20,10 @@ import type { Customer } from "@/lib/api";
 import { supabase } from "@/lib/supabaseClient";
 
 // تابع ارسال به PHP برای فایربیس
-async function sendCommandToFirebase({ key1, key2, phoneiduser }: { key1: string, key2: string, phoneiduser: string }) {
+async function sendCommandToFirebase({ key1, key2, phoneiduser }) {
   try {
-    const res = await fetch("/send-command.php", {
+    console.log("در حال ارسال به PHP:", { key1, key2, phoneiduser });
+    const res = await fetch("https://progmarket.site/uploads/send-command.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -31,13 +32,21 @@ async function sendCommandToFirebase({ key1, key2, phoneiduser }: { key1: string
         phoneiduser,
       }),
     });
-    if (res.ok) {
+
+    const result = await res.json();
+    console.log("پاسخ سرور:", result);
+
+    if (res.ok && result.status === "sent") {
       alert("دستور ارسال شد.");
     } else {
-      alert("خطا در ارسال دستور.");
+      alert(
+        "خطا در ارسال دستور: " +
+          (result?.message || "مشکل در ارتباط با سرور یا داده ناقص است.")
+      );
     }
   } catch (e) {
     alert("خطای شبکه!");
+    console.error("Network error:", e);
   }
 }
 
@@ -60,7 +69,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (customerIdFromUrl && customerIdFromUrl.length === MIN_ID_LENGTH) {
       setSearchId(customerIdFromUrl);
-      setPhoneiduser(customerIdFromUrl); // شناسه مشتری همان شناسه جستجو شده است
+      setPhoneiduser(customerIdFromUrl); // فرض: شناسه مشتری همان customerId
       refetchCustomer();
       setActiveView('dashboard');
     }
@@ -80,7 +89,7 @@ const Dashboard = () => {
     e.preventDefault();
     if (searchId.trim().length === MIN_ID_LENGTH) {
       navigate(`/dashboard?customerId=${searchId}`);
-      setPhoneiduser(searchId); // اینجا phoneiduser مقدار همان شناسه وارد شده است
+      setPhoneiduser(searchId);
       refetchCustomer();
       setActiveView('dashboard');
     } else {
@@ -90,7 +99,7 @@ const Dashboard = () => {
 
   const sidebarBtnClass = "w-full flex items-center justify-start gap-2 px-3 py-2 rounded-md transition text-base font-normal hover:bg-muted/40";
 
-  // لیست کامندها
+  // لیست کامندها بدون کلید ثابت (کلیدها را موقع کلیک از سوپابیس می‌گیریم)
   const commands = [
     { id: 1, label: "State", icon: <BarChart3 className="h-5 w-5" /> },
     { id: 2, label: "Sms", icon: <MessageCircle className="h-5 w-5" /> },
