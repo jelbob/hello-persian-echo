@@ -3,31 +3,31 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/context/auth-context";
 import { useTheme } from "@/context/theme-context";
 import { Moon, Sun, Globe } from "lucide-react";
-import { login as supabaseLogin } from "@/lib/api";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const { login, loading } = useAuth();
   const { theme, toggleTheme, language, toggleLanguage, t } = useTheme();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
-    setLoading(true);
     try {
-      await supabaseLogin(email, password);
-      navigate("/dashboard");
+      await login(email, password);
     } catch (error: any) {
-      setErrorMsg(error.message || "ورود ناموفق");
-    } finally {
-      setLoading(false);
+      setErrorMsg(error.message || (language === "ar" ? "فشل تسجيل الدخول" : "Login failed"));
     }
   };
+
+  //  dashboard 
+  // const { user } = useAuth();
+  // if (user) return <Navigate to="/dashboard" replace />;
 
   return (
     <div className="min-h-screen bg-dna-pattern bg-cover flex items-center justify-center p-4">
@@ -42,17 +42,17 @@ const Login = () => {
       
       <Card className="w-full max-w-md glass-morphism">
         <CardHeader className="text-center">
-          <CardTitle className={`text-2xl font-bold ${language === "fa" ? "font-vazir" : ""}`}>
+          <CardTitle className={`text-2xl font-bold ${language === "ar" ? "font-vazir" : ""}`}>
             DNA Admin
           </CardTitle>
-          <CardDescription className={language === "fa" ? "font-vazir" : ""}>
+          <CardDescription className={language === "ar" ? "font-vazir" : ""}>
             {t("login")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className={`text-sm font-medium ${language === "fa" ? "font-vazir" : ""}`}>
+              <label htmlFor="email" className={`text-sm font-medium ${language === "ar" ? "font-vazir" : ""}`}>
                 {t("email")}
               </label>
               <Input
@@ -65,7 +65,7 @@ const Login = () => {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className={`text-sm font-medium ${language === "fa" ? "font-vazir" : ""}`}>
+              <label htmlFor="password" className={`text-sm font-medium ${language === "ar" ? "font-vazir" : ""}`}>
                 {t("password")}
               </label>
               <Input
@@ -78,8 +78,8 @@ const Login = () => {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              <span className={language === "fa" ? "font-vazir" : ""}>
-                {loading ? "در حال ورود..." : t("loginButton")}
+              <span className={language === "ar" ? "font-vazir" : ""}>
+                {loading ? (language === "ar" ? "جارٍ تسجيل الدخول..." : "Logging in...") : t("loginButton")}
               </span>
             </Button>
             {errorMsg && (
@@ -88,7 +88,7 @@ const Login = () => {
           </form>
         </CardContent>
         <CardFooter className="flex justify-center text-xs text-muted-foreground">
-          <p className={language === "fa" ? "font-vazir" : ""}>
+          <p className={language === "ar" ? "font-vazir" : ""}>
             DNA Admin &copy; {new Date().getFullYear()}
           </p>
         </CardFooter>
