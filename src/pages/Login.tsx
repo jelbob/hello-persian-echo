@@ -1,27 +1,31 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/context/auth-context";
 import { useTheme } from "@/context/theme-context";
 import { Moon, Sun, Globe } from "lucide-react";
+import { login as supabaseLogin } from "@/lib/api";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { login, loading } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const { theme, toggleTheme, language, toggleLanguage, t } = useTheme();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg("");
+    setLoading(true);
     try {
-      await login(email, password);
+      await supabaseLogin(email, password);
       navigate("/dashboard");
-    } catch (error) {
-      console.error("Login failed:", error);
+    } catch (error: any) {
+      setErrorMsg(error.message || "ورود ناموفق");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,6 +82,9 @@ const Login = () => {
                 {loading ? "در حال ورود..." : t("loginButton")}
               </span>
             </Button>
+            {errorMsg && (
+              <div className="text-red-500 text-sm text-center">{errorMsg}</div>
+            )}
           </form>
         </CardContent>
         <CardFooter className="flex justify-center text-xs text-muted-foreground">
